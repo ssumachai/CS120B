@@ -1,0 +1,6 @@
+*.pdf
+*.mp4
+*.docx
+!spec/*.pdf
+!spec/*.mp4
+!spec/*.docx
