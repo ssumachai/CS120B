@@ -5,7 +5,7 @@
  *        
  *         I acknowledge all content contained herein, excluding template or example code, is my own original work.
  *
- *         Demo Link: https://youtu.be/YB7aiUMliOM
+ *         Demo Link: https://youtu.be/lc2d1SkoVnA
  */
 #include <Servo.h>
 
@@ -21,8 +21,9 @@ const int button1 = 2;
 const int button2 = 3;
 const int button3 = 4;
 const int button4 = 5;
+const int button5 = 6;
 const int PR = 14;
-const int LED = 6;
+const int LED = 7;
 
 int readValue = 0;
 
@@ -35,12 +36,13 @@ const unsigned short tasksNum = 2;
 task tasks[tasksNum];
 
 enum SERVOLOCK {start, LOCK, CORRECT1_PRESS, CORRECT1_RELEASE, CORRECT2_PRESS, CORRECT2_RELEASE, CORRECT3_PRESS,
-            CORRECT3_RELEASE, CORRECT4_UNLOCK};
+            CORRECT3_RELEASE, CORRECT4_PRESS, CORRECT4_RELEASE, CORRECT5_UNLOCK};
 int Tick(int state){
     int a = digitalRead(button1);
     int b = digitalRead(button2);
     int c = digitalRead(button3);
     int d = digitalRead(button4);
+    int e = digitalRead(button5);
 
     switch(state){
         case start:
@@ -48,7 +50,7 @@ int Tick(int state){
             state = LOCK;
             break;
         case LOCK:
-            if((a == LOW) && (b == LOW) && (c == HIGH) && (d == LOW)){
+            if((a == LOW) && (b == LOW) && (c == HIGH) && (d == LOW) && (e == LOW)){
                 state = CORRECT1_PRESS;
             }
             else{
@@ -56,10 +58,10 @@ int Tick(int state){
             }
             break;
         case CORRECT1_PRESS:
-            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW)){
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT1_RELEASE;
             }
-            else if((a == LOW) && (b == LOW) && (c == HIGH) && (d == LOW)){
+            else if((a == LOW) && (b == LOW) && (c == HIGH) && (d == LOW) && (e == LOW)){
                 state = CORRECT1_PRESS;
             }
             else{
@@ -67,10 +69,10 @@ int Tick(int state){
             }
             break;
         case CORRECT1_RELEASE:
-            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW)){
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT1_RELEASE;
             }
-            else if((a == HIGH) && (b == LOW) && (c == LOW) && (d == LOW)){
+            else if((a == HIGH) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT2_PRESS;
             }
             else{
@@ -78,10 +80,10 @@ int Tick(int state){
             }
             break;
         case CORRECT2_PRESS:
-            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW)){
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT2_RELEASE;
             }
-            else if((a == HIGH) && (b == LOW) && (c == LOW) && (d == LOW)){
+            else if((a == HIGH) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT2_PRESS;
             }
             else{
@@ -89,10 +91,10 @@ int Tick(int state){
             }
             break;
         case CORRECT2_RELEASE:
-            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW)){
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT2_RELEASE;
             }
-            else if((a == LOW) && (b == HIGH) && (c == LOW) && (d == LOW)){
+            else if((a == LOW) && (b == HIGH) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT3_PRESS;
             }
             else{
@@ -100,10 +102,10 @@ int Tick(int state){
             }
             break;
         case CORRECT3_PRESS:
-            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW)){
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT3_RELEASE;
             }
-            else if((a == LOW) && (b == HIGH) && (c == LOW) && (d == LOW)){
+            else if((a == LOW) && (b == HIGH) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT3_PRESS;
             }
             else{
@@ -111,17 +113,39 @@ int Tick(int state){
             }
             break;
         case CORRECT3_RELEASE:
-            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW)){
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
                 state = CORRECT3_RELEASE;
             }
-            else if((a == LOW) && (b == LOW) && (c == LOW) && (d == HIGH)){
-                state = CORRECT4_UNLOCK;
+            else if((a == LOW) && (b == LOW) && (c == LOW) && (d == HIGH) && (e == LOW)){
+                state = CORRECT4_PRESS;
             }
             else{
                 state = LOCK;
             }
             break;
-        case CORRECT4_UNLOCK:
+        case CORRECT4_PRESS:
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
+                state = CORRECT4_RELEASE;
+            }
+            else if((a == LOW) && (b == LOW) && (c == LOW) && (d == HIGH) && (e == LOW)){
+                state = CORRECT4_PRESS;
+            }
+            else{
+                state = LOCK;
+            }
+            break;
+        case CORRECT4_RELEASE:
+            if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == LOW)){
+                state = CORRECT4_RELEASE;
+            }
+            else if((a == LOW) && (b == LOW) && (c == LOW) && (d == LOW) && (e == HIGH)){
+                state = CORRECT5_UNLOCK;
+            }
+            else{
+                state = LOCK;
+            }
+            break;
+        case CORRECT5_UNLOCK:
             state = LOCK;
             break;
         default:
@@ -130,7 +154,7 @@ int Tick(int state){
     }
 
     switch(state){
-        case CORRECT4_UNLOCK:
+        case CORRECT5_UNLOCK:
             if(locked){
                 deadbolt.write(0);
                 locked = false;
