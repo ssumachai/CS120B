@@ -12,7 +12,7 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 class unit {
     public:
         byte rarity;
-        unsigned char art[504];
+        //unsigned char art[504];
         char character_name[16];
         
         void setArt(unsigned char artwork[504]){
