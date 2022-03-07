@@ -15,11 +15,12 @@ class unit {
         //unsigned char art[504];
         char character_name[16];
         
-        void setArt(unsigned char artwork[504]){
+        /*void setArt(unsigned char artwork[504]){
             for(byte i = 0; i < 504; ++i){
                 art[i] = artwork[i];
             }
         }
+        */
         void setName(char name[16]){
             for(byte i = 0; i < 16; ++i){
                 character_name[i] = name[i];
