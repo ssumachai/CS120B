@@ -1,3 +1,13 @@
+/*         Your Name & E-mail:  Sumachai Suksanguan (ssuks001@ucr.edu)
+*          Lab Section:    021 
+ *         Assignment:    Custom Laboratory Project Demo 2
+ *         Exercise Description: Intermediate Functionality utilizing Joystick + Software Complexity
+ *        
+ *         I acknowledge all content contained herein, excluding template or example code, is my own original work.
+ *
+ *         Demo Link: https://youtu.be/1obgGrfoXeM
+ */
+
 #include "unit.h"
 #include "five_star.h"
 #include "four_star.h"
