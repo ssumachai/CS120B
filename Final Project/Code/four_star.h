@@ -126,6 +126,7 @@ void setupFourStars(unit (&units)[3]){
 
     for(byte i = 0; i < 3; ++i){
         units[i].rarity = 4;
+		units[i].index = i;
     }
     
     units[0].setName(bennett_name);

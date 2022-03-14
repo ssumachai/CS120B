@@ -240,6 +240,7 @@ void setupFiveStars(unit (&units)[6]){
 
     for(byte i = 0; i < 6; ++i){
         units[i].rarity = 5;
+		units[i].index = i;
     }
     
     units[0].setName(yae_name);

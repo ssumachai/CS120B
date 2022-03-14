@@ -28,6 +28,7 @@ const int button1 = 17, button2 = 16;           // Wish Buttons
 const int joyX = 14, joyY = 15, button = 8;     // Joystick     
 bool wish_arrow, menu_arrow;                    // Arrow Indicators
 bool menu, pity, wish = false;                  // Bools for Tasks to Display Appropriate Displays
+bool confirmed, wishing = false;                // LCD Confirmation
 byte timer;                                     // Timer lol
 byte curr_wish, wish_amount;                    // For use in State WISH_WAIT
 byte four_star_pity, five_star_pity;            // For Wish Numbers
@@ -45,6 +46,59 @@ byte stars[] = {
     B00000
 };
 
+void pull(){
+    //Wish Rates
+    // 5-Star - 0.6% 1 - 6 out of 1000
+    // 4-Star - 5.1% 7 - 57 out of 1000
+    // 3-Star - 94.3% 58 - 1000
+
+    // 4-Star Pity at 10
+    // 5-Star Pity at 90
+    long randNumber = 0;
+    long randUnit = 0;
+    long fifty_fifty = 0;
+    randNumber = random(1, 1001);
+    Serial.print("Draw: ");
+    Serial.print(randNumber);
+    if(five_star_pity == 89 || (randNumber >= 1 && randNumber <= 6)){
+        five_star_pity = 0;
+        ++four_star_pity;
+        if(!five_guarantee){
+            fifty_fifty = random(0, 2);
+            if(fifty_fifty){
+                randUnit = 0;
+            }
+            else{
+                five_guarantee = true;
+                randUnit = random(1, 6);
+            }
+        }
+        else{
+            randUnit = 0;
+            five_guarantee = false;
+        }
+        curr_unit = five_pool[randUnit];
+    }
+    else if(four_star_pity == 9 || (randNumber >= 7 && randNumber <= 57)){
+        four_star_pity = 0;
+        ++five_star_pity;
+        randUnit = random(0, 3);
+        curr_unit = four_pool[randUnit];
+    }
+    else{
+        ++four_star_pity;
+        ++five_star_pity;
+        randUnit = random(0, 5);
+        curr_unit = three_pool[randUnit];
+    }
+    Serial.print("\nUnit: ");
+    Serial.print(randUnit);
+    Serial.print("\nFour-Star Pity: ");
+    Serial.print(four_star_pity);
+    Serial.print("\nFive-Star Pity: ");
+    Serial.print(five_star_pity);
+    Serial.print("\n");
+}
 
 // Task Structure Definition
 typedef struct task {
@@ -89,6 +143,7 @@ int wish_Tick(int state){
                     menu = false;
                 }
                 lcd.clear();
+                display.clearDisplay();
             }
             else{
                 state = MENU;
@@ -102,6 +157,7 @@ int wish_Tick(int state){
                 wish = pity = false;
                 menu = true;
                 lcd.clear();
+                display.clearDisplay();
             }
             else{
                 state = PITY;
@@ -110,18 +166,76 @@ int wish_Tick(int state){
             }
             break;
         case WISH_IDLE:
-            if(one_wish && !ten_wish){
-                state = ONE_PULL_PRESS;
-                wish_arrow = true;
+            if(!confirm){
+                state = MENU;
+                menu = true;
+                pity = wish = false;
                 lcd.clear();
+                display.clearDisplay();
             }
-            else if(!one_wish && ten_wish){
-                state = TEN_PULL_PRESS;
-                wish_arrow = true;
+            else{
+                if(one_wish && !ten_wish){
+                    state = ONE_PULL_PRESS;
+                    confirmed = true;
+                    wish_arrow = true;
+                    wish_amount = 1;
+                    lcd.clear();
+                    display.clearDisplay();
+                }
+                else if(!one_wish && ten_wish){
+                    state = TEN_PULL_PRESS;
+                    confirmed = true;
+                    wish_arrow = true;
+                    wish_amount = 10;
+                    lcd.clear();
+                    display.clearDisplay();
+                }
+                else{
+                    state = WISH_IDLE;
+                }
+            }
+            break;
+        case ONE_PULL_PRESS:
+            if(one_wish && ten_wish){
+                state = RESET;
                 lcd.clear();
             }
             else{
-                state = WISH_IDLE;
+                if(!confirm){
+                    if(wish_arrow){
+                        state = ONE_WISH;
+                        pull();
+                    }
+                    else{
+                        state = WISH_IDLE;
+                    }
+                    lcd.clear();
+                }
+                else{
+                    state = ONE_PULL_PRESS;
+                }
+            }
+            break;
+        case TEN_PULL_PRESS:
+            if(one_wish && ten_wish){
+                state = RESET;
+                lcd.clear();
+            }
+            else{
+                if(!confirm){
+                    if(wish_arrow){
+                        state = TEN_WISH;
+                        curr_wish = 1;
+                        pull();
+                    }
+                    else{
+                        state = WISH_IDLE;
+                    }
+                    lcd.clear();
+                }
+                else{
+                    state = TEN_PULL_PRESS;
+                }
             }
             break;
         default:
@@ -131,7 +245,7 @@ int wish_Tick(int state){
     return state;
 }
 
-enum lcd_States {lcd_start, lcd_display};
+enum lcd_States {lcd_start, lcd_display, lcd_confirm};
 int lcd_Tick(int state){
     switch(state){
         case lcd_start:
@@ -139,7 +253,22 @@ int lcd_Tick(int state){
             pity = wish = false;
             break;
         case lcd_display:
-            state = lcd_display;
+            if(confirmed){
+                state = lcd_confirm;
+                lcd.clear();
+            }
+            else{
+                state = lcd_display;
+            }
+            break;
+        case lcd_confirm:
+            if(!confirmed){
+                state = lcd_display;
+                lcd.clear();
+            }
+            else{
+                state = lcd_confirm;
+            }
             break;
         default:
             break;
@@ -164,7 +293,29 @@ int lcd_Tick(int state){
                 lcd.print(five_star_pity);
             }
             else if(!menu && !pity && wish){
-                // TODO;
+                lcd.setCursor(0,0);
+                lcd.print("Button1: 1  Pull");
+                lcd.setCursor(0, 1);
+                lcd.print("Button2: 10 Pull");
+            }
+            break;
+        case lcd_confirm:
+            lcd.setCursor(0,0);
+            if(wish_amount == 1){
+                lcd.print("Use 1 Wish?");
+            }
+            else if(wish_amount == 10){
+                lcd.print("Use 10 Wishes?");
+            }
+            lcd.setCursor(0, 1);
+            lcd.print(" Yes / Cancel");
+            if(wish_arrow){
+                lcd.setCursor(0, 1);
+                lcd.write(">");
+            }
+            else{
+                lcd.setCursor(6, 1);
+                lcd.write(">");
             }
             break;
         default:
@@ -174,7 +325,7 @@ int lcd_Tick(int state){
     return state;
 }
 
-enum nokia_States {nokia_start, nokia_display};
+enum nokia_States {nokia_start, nokia_display, nokia_wish};
 int nokia_Tick(int state){
     switch(state){
         case nokia_start:
@@ -190,7 +341,46 @@ int nokia_Tick(int state){
 
     switch(state){
         case nokia_display:
-            // TODO;
+            if(menu && !pity && !wish){
+                display.setTextColor(BLACK);
+                display.setCursor(0,0);
+                display.setTextSize(1);
+                display.println("  Oh That's\n   Pitiful\n");
+                display.setTextSize(1);
+                display.println("  A Genshin\n Impact Wish\nPity Simulator");
+                display.display();
+            }
+            else if(!menu && pity && !wish){
+                display.setTextColor(BLACK);
+                display.setCursor(0,0);
+                display.setTextSize(1);
+                display.println("\n  Press the \n Joystick to \nReturn to the \n  Main Menu");
+                display.display();
+            }
+            else if(!menu && !pity && wish){
+                display.setTextColor(BLACK);
+                display.setCursor(0,0);
+                display.setTextSize(1);
+                display.println("Press: \n1-Wish+10-Wish to Reset Pity\n  Joystick\nto Return to\nthe Main Menu");
+                display.display();
+            }
+            break;
+        case nokia_wish:
+            display.clearDisplay();
+            switch(curr_unit.rarity){
+                case 3:
+                    display.drawBitmap(0, 0, three_art_array[curr_unit.index], 84, 48, BLACK);
+                    break;
+                case 4:
+                    display.drawBitmap(0, 0, four_art_array[curr_unit.index], 84, 48, BLACK);
+                    break;
+                case 5:
+                    display.drawBitmap(0, 0, five_art_array[curr_unit.index], 84, 48, BLACK);
+                    break;
+                default:
+                    break;
+            }
+            display.display();
             break;
         default:
             break;

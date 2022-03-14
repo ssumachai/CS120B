@@ -201,6 +201,7 @@ void setupThreeStars(unit (&units)[5]){
 
     for(byte i = 0; i < 5; ++i){
         units[i].rarity = 3;
+		units[i].index = i;
     }
     
     units[0].setName(sword_name);

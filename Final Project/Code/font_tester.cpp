@@ -11,11 +11,10 @@ void setup(){
     display.setRotation(2);         // I Soldered Upside Down...
     display.setContrast(57);
     display.clearDisplay();
-    display.invertDisplay(1);
 }
 
 void loop(){
-    display.setTextColor(WHITE);
+    display.setTextColor(BLACK);
     display.setCursor(0,0);
     display.setTextSize(2);
     display.println("Hello!");
