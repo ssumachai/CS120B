@@ -32,7 +32,6 @@ void setup(){
     display.setRotation(2);         // I Soldered Upside Down...
     display.setContrast(57);
     display.clearDisplay();
-    display.invertDisplay(1);
 
     // Initialize 16 x 2 LCD Display
     lcd.createChar(0, stars);
