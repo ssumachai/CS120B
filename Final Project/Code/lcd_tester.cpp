@@ -98,7 +98,7 @@ void pull(){
     }
     Serial.print("\nUnit: ");
     Serial.print(randUnit);
-    Serial.print("\n4-Star Pity: ");
+    Serial.print("\nFour-Star Pity: ");
     Serial.print(four_star_pity);
     Serial.print("\nFive-Star Pity: ");
     Serial.print(five_star_pity);
@@ -409,11 +409,11 @@ void Tick(){
             break;
         case ONE_WISH:
             lcd.setCursor(0,0);
-            curr_unit.printToLCD();
+            curr_unit.printToDisplays();
             break;
         case TEN_WISH:
             lcd.setCursor(0,0);
-            curr_unit.printToLCD();
+            curr_unit.printToDisplays();
             if(curr_wish < 10){
                 lcd.setCursor(7,1);
                 lcd.print("( ");

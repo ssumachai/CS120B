@@ -115,8 +115,8 @@ const unsigned char xinyan [] PROGMEM = {
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 1632)
 const unsigned char* four_art_array[3] = {
 	bennett,
-	sara,
-	xinyan
+	xinyan,
+	sara
 };
 
 void setupFourStars(unit (&units)[3]){

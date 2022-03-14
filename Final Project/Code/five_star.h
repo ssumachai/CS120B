@@ -232,22 +232,22 @@ const unsigned char* five_art_array[6] = {
 
 void setupFiveStars(unit (&units)[6]){
     char yae_name[16] = "Yae Miko";
-    char diluc_name[16] = "Diluc";
+    char klee_name[16] = "Klee";
     char jean_name[16] = "Jean";
     char qiqi_name[16] = "Qiqi";
     char keqing_name[16] = "Keqing";
-    char mona_name[16] = "Mona";
+    char childe_name[16] = "Tartaglia";
 
     for(byte i = 0; i < 6; ++i){
         units[i].rarity = 5;
     }
     
     units[0].setName(yae_name);
-    units[1].setName(diluc_name);
+    units[1].setName(klee_name);
     units[2].setName(jean_name);
     units[3].setName(qiqi_name);
     units[4].setName(keqing_name);
-    units[5].setName(mona_name);
+    units[5].setName(childe_name);
 }
 
 #endif
