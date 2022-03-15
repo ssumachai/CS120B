@@ -1,4 +1,4 @@
-<h1 align="center">CS/EE 120B Custom Laboratory Project Report (PENDING REVIEW)</h1>
+<h1 align="center">CS/EE 120B Custom Laboratory Project Report</h1>
 <h2 align="center">"Oh that's Pitiful"</h2>
 <h3><p align="center">A <i>Genshin Impact</i> Wish Pity Simulator</p></h3>
 <h4><p align="center">Author: Sumachai Suksanguan, SSID 862012882<br>March 15, 2022</p></h4>
@@ -77,9 +77,11 @@ Five-Star Pity is a bit trickier to explain, but still feasible.  Because the dr
 | Five-Star Pity (Wishes)     |  Drop Rate  | Int Range |
 | --------------------------- | ----------- | --------- |
 | 0 - 74                      | 0.6%        | 1 - 6     |
-| 75                          | 20%         | 1 - 20    |
-| 75+                         | 20% + 3% Each Iteration       | 58 - 1000 |
+| 75                          | 20%         | 1 - 200    |
+| 75+                         | 20% + 3% Each Iteration       | 1 - (230 + 30i) |
 |90 | Guaranteed | Guaranteed|
+
+> Note: *i* represents the amount of additional wishes after 75.
 
 So while a user can still definitely get lucky with the system, it begins to make it easier on the user from 75 wishes and onwards.
 
@@ -99,6 +101,11 @@ The project utilized three complexities that were as follows:
 ## Joystick Implementation
 
 The joystick was the first complexity, and served as a menu selector that interfaced with the 16x2 LCD.  The system featured it's own task designed solely for handling the joystick, with this main body of text handling most of the work:
+
+By reading the joystick `VRx` and `VRy` inputs with analog ports, I made it so that any substantial movements in the appropriate direction were read by the system.  There is no need for omnidirectional movement, as the purpose of the joystick is to simulate arrow movement, so either up or down, and left or right.
+
+We know the Joystick shifts into a negative position in either the x- or y-direction when its read value is nearly 0, so I just gave it a grace period of less than 200.  Likewise, positive direction is within the 1000 range, so it also has a grace period of 800 or greater.
+
 
 ```c++
             if(xValue < 200 && (yValue >= 200 && yValue <= 1100)){
@@ -131,6 +138,27 @@ The system revolves around users obtaining objects of type `Unit`, which is defi
 * `printToDisplay()` - Print Function
 
 They *would* have another member variable `artwork`, if the memory required for those isn't so expensive.  Giving all objects a member variable of a huge character array takes up a hefty amount of space after a while, so the work-around I developed was determining artwork via `rarity` and `index`.
+
+As of final implementation, there are a total of __14 Obtainable Units__ in the game.  These units are down below:
+
+Character Name  | Rarity | Index |
+--------------- | ------ | ----- |
+Random Sword    |   3    |   0
+Random Bow      |   3    |   1
+Random Claymore |   3    |   2
+Random Catalyst |   3    |   3
+Random Polearm  |   3    |   4
+Bennett         |   4    |   0
+Xinyan          |   4    |   1
+Kujou Sara      |   4    |   2
+Yae Miko        |   5    |   0
+Klee            |   5    |   1
+Jean            |   5    |   2
+Qiqi            |   5    |   3
+Keqing          |   5    |   4
+Tartaglia       |   5    |   5
+
+
 
 Within the `nokia_wish` state, the system determines the artwork to be used as such:
 ```c++
