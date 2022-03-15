@@ -140,7 +140,6 @@ int wish_Tick(int state){
     switch(state){
         case wish_start:
             state = MENU;
-            menu_arrow = true;
             reset = pity = wish = wishing = confirmed = false;
             menu = true;
             four_star_pity = five_star_pity = 0;
@@ -196,7 +195,6 @@ int wish_Tick(int state){
                 if(one_wish && !ten_wish){
                     state = ONE_PULL_PRESS;
                     confirmed = true;
-                    wish_arrow = true;
                     wish_amount = 1;
                     lcd.clear();
                     display.clearDisplay();
@@ -204,7 +202,6 @@ int wish_Tick(int state){
                 else if(!one_wish && ten_wish){
                     state = TEN_PULL_PRESS;
                     confirmed = true;
-                    wish_arrow = true;
                     wish_amount = 10;
                     lcd.clear();
                     display.clearDisplay();
@@ -614,6 +611,7 @@ int joy_Tick(int state){
     switch(state){
         case joy_start:
             state = joy_idle;
+            menu_arrow = wish_arrow = true;
             break;
         case joy_idle:
             if(xValue < 200 && (yValue >= 200 && yValue <= 1100)){
