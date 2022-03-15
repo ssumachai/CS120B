@@ -51,7 +51,7 @@ void loop(){
 
         lcd.clear();
         three_pool[i].printToDisplays();
-        delay(2500);
+        delay(1000);
     }
     for(int i = 0; i < 3; ++i){
         display.clearDisplay();
@@ -60,7 +60,7 @@ void loop(){
 
         lcd.clear();
         four_pool[i].printToDisplays();
-        delay(2500);
+        delay(1000);
     }
     for(int i = 0; i < 6; ++i){
         display.clearDisplay();
@@ -69,6 +69,6 @@ void loop(){
 
         lcd.clear();
         five_pool[i].printToDisplays();
-        delay(2500);
+        delay(1000);
     }
 }

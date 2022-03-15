@@ -1,11 +1,11 @@
 /*         Your Name & E-mail:  Sumachai Suksanguan (ssuks001@ucr.edu)
 *          Lab Section:    021 
  *         Assignment:    Final Project
- *         Exercise Description: Oh That's Pitiful
+ *         Exercise Description: Oh That's Pitiful (Full Functionality + 3 Complexities)
  *        
  *         I acknowledge all content contained herein, excluding template or example code, is my own original work.
  *
- *         Demo Link:
+ *         Demo Link: https://youtu.be/JGi1TA9-SYM
  */
 
 #include <SPI.h>
@@ -57,7 +57,7 @@ void check_soft_pity(){
         five_rate = 200;
     }
     else if(five_star_pity > 74){
-        five_rate += 3;
+        five_rate += 30;
     }
 }
 
