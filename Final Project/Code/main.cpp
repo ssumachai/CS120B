@@ -24,14 +24,17 @@ unit four_pool[3];
 unit three_pool[5];
 unit curr_unit;
 
+
+
 const int button1 = 17, button2 = 16;           // Wish Buttons
 const int joyX = 14, joyY = 15, button = 8;     // Joystick     
 bool wish_arrow, menu_arrow;                    // Arrow Indicators
-bool menu, pity, wish = false;                  // Bools for Tasks to Display Appropriate Displays
+bool menu, pity, wish, reset = false;           // Bools for Tasks to Display Appropriate Displays
 bool confirmed, wishing = false;                // LCD Confirmation
 byte timer;                                     // Timer lol
 byte curr_wish, wish_amount;                    // For use in State WISH_WAIT
 byte four_star_pity, five_star_pity;            // For Wish Numbers
+byte five_rate;                                 // Rate of a Five Star Object
 bool five_guarantee;                            // Used to Track 5* 50/50
 
 // Custom Glype used to indicate Rarity
@@ -46,21 +49,34 @@ byte stars[] = {
     B00000
 };
 
-void pull(){
-    //Wish Rates
-    // 5-Star - 0.6% 1 - 6 out of 1000
-    // 4-Star - 5.1% 7 - 57 out of 1000
-    // 3-Star - 94.3% 58 - 1000
+void check_soft_pity(){
+    if(five_star_pity < 74){        
+        five_rate = 6;          
+    }
+    else if(five_star_pity == 74){
+        five_rate = 200;
+    }
+    else if(five_star_pity > 74){
+        five_rate += 3;
+    }
+}
 
-    // 4-Star Pity at 10
-    // 5-Star Pity at 90
+void pull(){
+    // Wish Rates will Vary depending on your pity
+    // Explained above
+    check_soft_pity();
+    int four_range_low, four_range_hi;
+
+    four_range_low = five_rate + 1;
+    four_range_hi = four_range_low + 50;
+
     long randNumber = 0;
     long randUnit = 0;
     long fifty_fifty = 0;
     randNumber = random(1, 1001);
     Serial.print("Draw: ");
     Serial.print(randNumber);
-    if(five_star_pity == 89 || (randNumber >= 1 && randNumber <= 6)){
+    if(five_star_pity == 89 || (randNumber >= 1 && randNumber <= five_rate)){
         five_star_pity = 0;
         ++four_star_pity;
         if(!five_guarantee){
@@ -79,7 +95,7 @@ void pull(){
         }
         curr_unit = five_pool[randUnit];
     }
-    else if(four_star_pity == 9 || (randNumber >= 7 && randNumber <= 57)){
+    else if(four_star_pity == 9 || (randNumber >= four_range_hi && randNumber <= four_range_hi)){
         four_star_pity = 0;
         ++five_star_pity;
         randUnit = random(0, 3);
@@ -97,7 +113,7 @@ void pull(){
     Serial.print(four_star_pity);
     Serial.print("\nFive-Star Pity: ");
     Serial.print(five_star_pity);
-    Serial.print("\n");
+    Serial.print("\n");   
 }
 
 // Task Structure Definition
@@ -113,7 +129,7 @@ const unsigned short tasksNum = 4;
 task tasks[tasksNum];
 
 enum wish_States {wish_start, MENU, WISH_IDLE, PITY, ONE_PULL_PRESS,
-                  TEN_PULL_PRESS, ONE_WISH, TEN_WISH, WISH_WAIT, RESET, PRINT_RESET};
+                  TEN_PULL_PRESS, ONE_WISH, TEN_WISH, WISH_WAIT, RESET, RESETTING};
 int wish_Tick(int state){
     int one_wish = digitalRead(button1);
     int ten_wish = digitalRead(button2);
@@ -125,9 +141,11 @@ int wish_Tick(int state){
         case wish_start:
             state = MENU;
             menu_arrow = true;
+            reset = pity = wish = wishing = confirmed = false;
             menu = true;
             four_star_pity = five_star_pity = 0;
             five_guarantee = false;
+            five_rate = 6;
             timer = 0;
             break;
         case MENU:
@@ -166,6 +184,7 @@ int wish_Tick(int state){
             }
             break;
         case WISH_IDLE:
+            wishing = confirmed = false;
             if(!confirm){
                 state = MENU;
                 menu = true;
@@ -198,17 +217,23 @@ int wish_Tick(int state){
         case ONE_PULL_PRESS:
             if(one_wish && ten_wish){
                 state = RESET;
+                reset = true;
+                confirmed = false;
                 lcd.clear();
+                display.clearDisplay();
             }
             else{
                 if(!confirm){
                     if(wish_arrow){
+                        wishing = true;
                         state = ONE_WISH;
+                        wish = false;
                         pull();
                     }
                     else{
                         state = WISH_IDLE;
                     }
+                    confirmed = false;
                     lcd.clear();
                 }
                 else{
@@ -219,24 +244,102 @@ int wish_Tick(int state){
         case TEN_PULL_PRESS:
             if(one_wish && ten_wish){
                 state = RESET;
+                reset = true;
+                confirmed = false;
                 lcd.clear();
+                display.clearDisplay();
             }
             else{
                 if(!confirm){
                     if(wish_arrow){
                         state = TEN_WISH;
+                        wishing = true;
+                        wish = false;
                         curr_wish = 1;
                         pull();
                     }
                     else{
                         state = WISH_IDLE;
                     }
-                    lcd.clear();
+                    confirmed = false;
                 }
                 else{
                     state = TEN_PULL_PRESS;
                 }
             }
+            break;
+        case ONE_WISH:
+            if(yValue > 800 && (xValue >= 200 && xValue <= 1100)){
+                state = WISH_WAIT;
+                wishing = false;
+                display.clearDisplay();
+            }
+            else{
+                state = ONE_WISH;
+            }
+            break;
+        case TEN_WISH:
+            if(curr_wish < 10){
+                if(!confirm){
+                    ++curr_wish;
+                    pull();
+                    display.clearDisplay();
+                    lcd.clear();
+                }
+            }
+            if(curr_wish == 10 && (yValue > 800 && (xValue >= 200 && xValue <= 1100))){
+                    state = WISH_WAIT;
+                    wishing = false;
+                    display.clearDisplay();
+            }
+            else{
+                state = TEN_WISH;
+            }
+            break;
+        case WISH_WAIT:
+            if(!confirm){
+                state = WISH_IDLE;
+                wishing = confirmed = false;
+                wish = true;
+            }
+            else{
+                state = WISH_WAIT;
+            }
+            break;
+        case RESET:
+            if(!confirm){
+                if(wish_arrow){
+                    state = RESETTING;
+                    timer = 0;
+                    confirmed = true;
+                    lcd.clear();
+                    display.clearDisplay();
+                }
+                else{
+                    reset = false;
+                    state = WISH_IDLE;
+                    lcd.clear();
+                }
+            }
+            else{
+                state = RESET;
+            }
+            break;
+        case RESETTING:
+            if(timer < 20){
+                state = RESETTING;
+            }
+            else{
+                state = wish_start;
+            }
+            break;
+        default:
+            break;
+    }
+
+    switch(state){
+        case RESETTING:
+            ++timer;
             break;
         default:
             break;
@@ -245,7 +348,7 @@ int wish_Tick(int state){
     return state;
 }
 
-enum lcd_States {lcd_start, lcd_display, lcd_confirm};
+enum lcd_States {lcd_start, lcd_display, lcd_confirm, lcd_wish, lcd_wait, lcd_reset};
 int lcd_Tick(int state){
     switch(state){
         case lcd_start:
@@ -257,18 +360,48 @@ int lcd_Tick(int state){
                 state = lcd_confirm;
                 lcd.clear();
             }
-            else{
-                state = lcd_display;
-            }
-            break;
-        case lcd_confirm:
-            if(!confirmed){
-                state = lcd_display;
+            else if(wishing){
+                state = lcd_wish;
                 lcd.clear();
             }
             else{
-                state = lcd_confirm;
+                state = lcd_display;
             }
+            
+            break;
+        case lcd_confirm:
+            if(reset){
+                state = lcd_reset;
+                lcd.clear();
+            }
+            else{
+                if(!confirmed){
+                    state = lcd_display;
+                    lcd.clear();
+                }
+                else{
+                    state = lcd_confirm;
+                }
+            }
+            break;
+        case lcd_wish:
+            if(!wishing){
+                state = lcd_wait;
+                lcd.clear();
+            }
+            else{
+                state = lcd_wish;
+            }
+            break;
+        case lcd_wait:
+            if(wish){
+                state = lcd_display;
+            }
+            else{
+                state = lcd_wait;
+            }
+        case lcd_reset:
+            state = (reset) ? lcd_reset : lcd_display;
             break;
         default:
             break;
@@ -278,43 +411,92 @@ int lcd_Tick(int state){
         case lcd_display:
             if(menu && !pity && !wish){
                 lcd.setCursor(0,0);
-                lcd.print(" Wish Simulator");
+                lcd.print(F(" Wish Simulator"));
                 lcd.setCursor(0, 1);
-                lcd.print(" Pity History");
+                lcd.print(F(" Pity History"));
                 lcd.setCursor(0, !menu_arrow);
                 lcd.write(">");
             }
             else if(!menu && pity && !wish){
                 lcd.setCursor(0, 0);
-                lcd.print("4-Star Pity: ");
+                lcd.print(F("4-Star Pity: "));
                 lcd.print(four_star_pity);
                 lcd.setCursor(0, 1);
-                lcd.print("5-Star Pity: ");
+                lcd.print(F("5-Star Pity: "));
                 lcd.print(five_star_pity);
             }
             else if(!menu && !pity && wish){
                 lcd.setCursor(0,0);
-                lcd.print("Button1: 1  Pull");
+                lcd.print(F("Button1: 1  Pull"));
                 lcd.setCursor(0, 1);
-                lcd.print("Button2: 10 Pull");
+                lcd.print(F("Button2: 10 Pull"));
             }
             break;
         case lcd_confirm:
             lcd.setCursor(0,0);
             if(wish_amount == 1){
-                lcd.print("Use 1 Wish?");
+                lcd.print(F("Use 1 Wish?"));
             }
             else if(wish_amount == 10){
-                lcd.print("Use 10 Wishes?");
+                lcd.print(F("Use 10 Wishes?"));
             }
             lcd.setCursor(0, 1);
-            lcd.print(" Yes / Cancel");
+            lcd.print(F(" Yes / Cancel"));
             if(wish_arrow){
                 lcd.setCursor(0, 1);
                 lcd.write(">");
             }
             else{
                 lcd.setCursor(6, 1);
+                lcd.write(">");
+            }
+            break;
+        case lcd_wish:
+            lcd.setCursor(0,0);
+            curr_unit.printToDisplays();
+            if(wish_amount == 10){
+                lcd.setCursor(7, 1);
+                if(curr_wish < 10){
+                    lcd.print(F("( "));
+                }
+                else{
+                    lcd.print(F("("));
+                }
+                lcd.print(curr_wish);
+                lcd.print(F(" / 10)"));
+            }
+            break;
+        case lcd_wait:
+            lcd.setCursor(0, 0);
+            if(wish_amount == 1){
+                lcd.print(F("Used 1 Wish"));
+            }
+            else if(wish_amount == 10){
+                lcd.print(F("Used  10 Wishes"));
+            }
+            lcd.setCursor(0,1);
+            lcd.print(F("- JS TO RETURN -"));
+            break;
+        case lcd_reset:
+            lcd.setCursor(0,0);
+            if(confirmed){
+                lcd.print(F("Resetting Pity..."));
+            }
+            else{
+                lcd.print(F("Reset All Pity?"));
+            }
+            lcd.setCursor(0, 1);
+            if(confirmed){
+                lcd.print(F("Returning Home"));
+            }
+            else{
+                lcd.print(F(" Yes / Cancel"));
+                if(wish_arrow){
+                    lcd.setCursor(0, 1);
+                }
+                else{
+                    lcd.setCursor(6, 1);
+                }
                 lcd.write(">");
             }
             break;
@@ -325,7 +507,7 @@ int lcd_Tick(int state){
     return state;
 }
 
-enum nokia_States {nokia_start, nokia_display, nokia_wish};
+enum nokia_States {nokia_start, nokia_display, nokia_wish, nokia_reset};
 int nokia_Tick(int state){
     switch(state){
         case nokia_start:
@@ -333,7 +515,33 @@ int nokia_Tick(int state){
             state = nokia_display;
             break;
         case nokia_display:
-            state = nokia_display;
+            if(wishing){
+                state = nokia_wish;
+            }
+            else if(reset){
+                state = nokia_reset;
+            }
+            else{
+                state = nokia_display;
+            }
+            break;
+        case nokia_wish:
+            if(!wishing){
+                display.clearDisplay();
+                state = nokia_display;
+            }
+            else{
+                state = nokia_wish;
+            }
+            break;
+        case nokia_reset:
+            if(reset){
+                state = nokia_reset;
+            }
+            else{
+                state = nokia_display;
+                display.clearDisplay();
+            }
             break;
         default:
             break;
@@ -345,23 +553,23 @@ int nokia_Tick(int state){
                 display.setTextColor(BLACK);
                 display.setCursor(0,0);
                 display.setTextSize(1);
-                display.println("  Oh That's\n   Pitiful\n");
+                display.println(F("  Oh That's\n   Pitiful\n"));
                 display.setTextSize(1);
-                display.println("  A Genshin\n Impact Wish\nPity Simulator");
+                display.println(F("  A Genshin\n Impact Wish\nPity Simulator"));
                 display.display();
             }
             else if(!menu && pity && !wish){
                 display.setTextColor(BLACK);
                 display.setCursor(0,0);
                 display.setTextSize(1);
-                display.println("\n  Press the \n Joystick to \nReturn to the \n  Main Menu");
+                display.println(F("\n  Press the \n Joystick to \nReturn to the \n  Main Menu"));
                 display.display();
             }
             else if(!menu && !pity && wish){
                 display.setTextColor(BLACK);
                 display.setCursor(0,0);
                 display.setTextSize(1);
-                display.println("Press: \n1-Wish+10-Wish to Reset Pity\n  Joystick\nto Return to\nthe Main Menu");
+                display.println(F("Press: \n1-Wish+10-Wish to Reset Pity\n  Joystick\nto Return to\nthe Main Menu"));
                 display.display();
             }
             break;
@@ -380,6 +588,15 @@ int nokia_Tick(int state){
                 default:
                     break;
             }
+            display.display();
+            break;
+        case nokia_reset:
+            display.setTextColor(BLACK);
+            display.setCursor(0,0);
+            display.setTextSize(2);
+            display.println(F("  OwO"));
+            display.setTextSize(1);
+            display.println(F("\nPreparing to\nReset Pity..."));
             display.display();
             break;
         default:
@@ -466,10 +683,14 @@ void setup(){
     setupFiveStars(five_pool);
     randomSeed(analogRead(19));
 
+    // Setup Drop Rates
+    five_rate = 6;
+
     // Setup Pin Mode for Buttons
     pinMode(button1, INPUT_PULLUP);
     pinMode(button2, INPUT_PULLUP);
     pinMode(button, INPUT_PULLUP);
+
 
     // Setup Tasks
 
@@ -481,12 +702,12 @@ void setup(){
     tasks[i].TickFct = &wish_Tick;
     ++i;
     tasks[i].state = lcd_start;
-    tasks[i].period = 500;
+    tasks[i].period = 100;
     tasks[i].elapsedTime = 0;
     tasks[i].TickFct = &lcd_Tick;
     ++i;
     tasks[i].state = nokia_start;
-    tasks[i].period = 500;
+    tasks[i].period = 100;
     tasks[i].elapsedTime = 0;
     tasks[i].TickFct = &nokia_Tick;
     ++i;
